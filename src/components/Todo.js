@@ -1,11 +1,29 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState, useEffect, useReducer } from 'react';
 import axios from 'axios';
 
 const todo = props => {
    const [todoName, setTodoName] = useState('');
-   const [submittedTodo, setSubmittedTodo] = useState(null);
-   const [todoList, setTodoList] = useState([]);
+   // const [submittedTodo, setSubmittedTodo] = useState(null);
+   // const [todoList, setTodoList] = useState([]);
    // const [todoState, setTodoState] = useState({ userInput: '', todoList: [] });
+
+   const todoListReducer = (state, action) => {
+      switch (action.type) {
+         case 'ADD':
+            return state.concat(action.payload);
+
+         case 'SET':
+            return action.payload;
+
+         case 'REMOVE':
+            return state.filter(todo => todo.id !== action.payload);
+
+         default:
+            return state;
+      }
+   };
+
+   const [todoList, dispatch] = useReducer(todoListReducer, []);
 
    useEffect(() => {
       axios
@@ -18,7 +36,7 @@ const todo = props => {
                todos.push({ id: key, name: todoData[key].name });
             }
 
-            setTodoList(todos);
+            dispatch({ type: 'SET', payload: todos });
          });
 
       return () => {
@@ -38,14 +56,14 @@ const todo = props => {
       };
    });
 
-   useEffect(
-      () => {
-         if (submittedTodo) {
-            setTodoList(todoList.concat(submittedTodo));
-         }
-      },
-      [submittedTodo]
-   );
+   // useEffect(
+   //    () => {
+   //       if (submittedTodo) {
+   //          dispatch({ type: 'ADD', payload: submittedTodo });
+   //       }
+   //    },
+   //    [submittedTodo]
+   // );
 
    const inputChangeHandler = event => {
       // setTodoState({
@@ -67,8 +85,17 @@ const todo = props => {
          .then(res => {
             setTimeout(() => {
                const todoItem = { id: res.data.name, name: todoName };
-               setSubmittedTodo(todoItem);
+               dispatch({ type: 'ADD', payload: todoItem });
             }, 3000);
+         })
+         .catch(err => console.log(err));
+   };
+
+   const todoRemoveHanlder = todoId => () => {
+      axios
+         .delete(`https://temporary-873cc.firebaseio.com/todos/${todoId}.json`)
+         .then(res => {
+            dispatch({ type: 'REMOVE', payload: todoId });
          })
          .catch(err => console.log(err));
    };
@@ -86,7 +113,9 @@ const todo = props => {
          </button>
          <ul>
             {todoList.map(todo => (
-               <li key={todo.id}>{todo.name}</li>
+               <li key={todo.id} onClick={todoRemoveHanlder(todo.id)}>
+                  {todo.name}
+               </li>
             ))}
          </ul>
       </Fragment>
