@@ -1,7 +1,17 @@
-import React, { Fragment, useEffect, useReducer, useRef } from 'react';
+import React, {
+   useState,
+   Fragment,
+   useEffect,
+   useReducer,
+   useRef,
+   useMemo
+} from 'react';
 import axios from 'axios';
 
+import List from './List';
+
 const todo = props => {
+   const [inputIsValid, setInputIsValid] = useState(false);
    // const [todoName, setTodoName] = useState('');
    // const [submittedTodo, setSubmittedTodo] = useState(null);
    // const [todoList, setTodoList] = useState([]);
@@ -49,13 +59,21 @@ const todo = props => {
       console.log(event.clientX, event.clientY);
    };
 
-   useEffect(() => {
-      document.addEventListener('mousemove', mouseMoveHnalder);
+   const inputValidationHandler = event => {
+      if (event.target.value.trim() === '') {
+         setInputIsValid(false);
+      } else {
+         setInputIsValid(true);
+      }
+   };
 
-      return () => {
-         document.removeEventListener('mousemove', mouseMoveHnalder);
-      };
-   });
+   // useEffect(() => {
+   //    document.addEventListener('mousemove', mouseMoveHnalder);
+
+   //    return () => {
+   //       document.removeEventListener('mousemove', mouseMoveHnalder);
+   //    };
+   // });
 
    // useEffect(
    //    () => {
@@ -106,17 +124,17 @@ const todo = props => {
 
    return (
       <Fragment>
-         <input type="text" placeholder="Todo" ref={todoInputRef} />
+         <input
+            type="text"
+            placeholder="Todo"
+            ref={todoInputRef}
+            onChange={inputValidationHandler}
+            style={{ backgroundColor: inputIsValid ? 'transparent' : 'red' }}
+         />
          <button type="button" onClick={todoAddHandler}>
             Add
          </button>
-         <ul>
-            {todoList.map(todo => (
-               <li key={todo.id} onClick={todoRemoveHanlder(todo.id)}>
-                  {todo.name}
-               </li>
-            ))}
-         </ul>
+         {useMemo(() => <List items={todoList} onClick={todoRemoveHanlder} />, [todoList])}
       </Fragment>
    );
 };
